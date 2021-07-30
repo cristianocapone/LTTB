@@ -92,7 +92,9 @@ class LTTB:
         return out
 
 
+
     def step (self ):
+    ''' La dinamica va propriamente sviluppata qui'''
         itau_m = self.itau_m
         itau_s = self.itau_s
 
