@@ -1,7 +1,7 @@
 """
     © 2021 This work is licensed under a CC-BY-NC-SA license.
     Title: ---
-    Authors: Anonymus
+    Authors: Cristiano Capone et al.
 """
 
 import numpy as np
