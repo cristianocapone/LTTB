@@ -18,6 +18,8 @@ class LTTB:
 
 		self.dt = par['dt']
 
+		self.tau_m = par['tau_m']
+
 		self.itau_m = np.exp (-self.dt / par['tau_m'])
 		self.itau_s = np.exp (-self.dt / par['tau_s'])
 		self.itau_ro = np.exp (-self.dt / par['tau_ro'])
@@ -117,14 +119,23 @@ class LTTB:
 		self.burstThreshold = .05/4
 		self.targThreshold = .08
 
-	def step (self ):
+	def step (self):
 		self.t += 1
+		t = self.t
 
 		itau_m = self.itau_m
 		itau_s = self.itau_s
 
+		# Qui mi da' errore
+		# Credo sia dovuto al fatto che J e' una matrice NxN, e moltiplica il vettore N-dimensionale S_filt.
+		# Bisogna quindi inserire il prodotto matriciale?
 
-		VapicRec[:,self.t] = VapicRec[:,self.t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tauH*(self.J*self.S_filt[:,self.t-1] +  self.h + self.href  ) + self.VresetApic*self.S_apic_prox[:,self.t-1]
+		self.VapicRec[:,t] = self.VapicRec[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J*self.S_filt[:,t-1] +  self.h + self.href) + self.VresetApic*self.S_apic_prox[:,t-1]
+
+		self.Vapic[:,t] = self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.jIn*X[:,t-1]*apicalFactor + self.h + self.href) + self.VresetApic*self.Sapic[:,t-1]
+
+		self.Isoma[:,t] = self.w*self.S_filt[:,t-1] + self.h + self.jInClock*self.xClock[:,t-1] + self.S_wind[:,t-1]*20 - self.b*self.W[:,t-1]
+		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t-1] ) ) * (1-self.Ssoma[:,t-1]) + self.Vreset*self.Ssoma[:,t]/(1 + 2*self.S_wind[:,t-1])
 
 	"""
 
