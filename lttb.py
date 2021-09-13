@@ -220,12 +220,19 @@ class LTTB:
 		self.S_wind_targ_filt[:,t+1] = self.S_wind_targ_filt[:,t]*beta_ro + self.S_wind_targ[:,t+1]*(1-beta_ro)
 		self.S_wind[:,t+1] = np.heaviside( self.S_wind_pred[:,t+1]+ self.S_wind_targ[:,t+1] - 1 , 1  )
 
+	def train_ro (self,par,out_epochs):
+		mse = []
+		for iter in range(out_epochs):
+			#SR = S_filtRO(:,1:end-1)
+			#SR = self.S_wind_targ[:,1:-2]
 
+			#SR = self.S_filtRO[:,1:-2]*self.S_wind_targ[:,1:-2]
+			SR = self.B_filt[:,1:-2]
 
-"""
+			Y= self.Jout@SR
 
-    S_wind_targ_filt(:,t+1) = S_wind_targ_filt(:,t)*betaRO + S_wind_targ(:,t+1)*(1-betaRO);
+			DJRO = (self.y_targ[:,1:-2] - Y)@SR.T
+			self.Jout = self.Jout + self.par['alpha_rout']*DJRO
+			mse.append(np.std(self.y_targ[:,1:-2] - Y)**2)
 
-    S_wind(:,t+1) = min( S_wind_pred(:,t+1)+S_wind_targ(:,t+1) ,1);
-
-"""
+		return mse,Y
