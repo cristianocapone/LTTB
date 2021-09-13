@@ -146,6 +146,9 @@ class LTTB:
 		self.S_wind_soma = np.zeros((self.N,self.T))
 		self.S_wind = np.zeros((self.N,self.T))
 
+		self.B = np.zeros((self.N,self.T))
+		self.B_rec = np.zeros((self.N,self.T))
+
 		self.B_filt = np.zeros((self.N,self.T))
 		self.B_filt_rec = np.zeros((self.N,self.T))
 
@@ -157,6 +160,10 @@ class LTTB:
 		self.S_filt_apic = np.zeros((self.N,self.T))
 		self.S_filt_apicCont = np.zeros((self.N,self.T))
 		self.S_filtRO = np.zeros((self.N,self.T))
+
+		self.S_wind_pred = np.zeros((self.N,self.T))
+
+
 
 		self.S_wind_targ_filt = np.zeros((self.N,self.T))
 
@@ -188,8 +195,8 @@ class LTTB:
 		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.S_wind[:,t]*20 - self.b*self.W[:,t]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
 
-		self.S_apic_prox[:,t+1] = np.heaviside( self.VapicRec[:,t],0 )
-		self.S_apic_dist[:,t+1] = np.heaviside( self.Vapic[:,t],0 )
+		self.S_apic_prox[:,t+1] = np.heaviside( self.VapicRec[:,t], 0 )
+		self.S_apic_dist[:,t+1] = np.heaviside( self.Vapic[:,t], 0 )
 		#self.Sapic_targ[:,t+1]  =  self.S_apic[:,t+1]
 
 		self.S_soma[:,t+1]= np.heaviside( self.Vsoma[:,t], 0 )
@@ -201,21 +208,21 @@ class LTTB:
 
 		self.S_wind_soma[:,t+1] = np.heaviside(self.S_filt_soma[:,t+1] - self.somaticThreshold, 0)
 
+		self.B[:,t+1]  = self.S_wind_soma[:,t+1]*self.S_apic_dist[:,t+1]
+		self.B_rec[:,t+1]  = self.S_wind_soma[:,t+1]*self.S_apic_prox[:,t+1]
+
+		self.B_filt[:,t+1]   = self.B_filt[:,t]*beta_targ + self.B[:,t+1]*(1-beta_targ)
+		self.B_filt_rec[:,t+1]   = self.B_filt_rec[:,t]*beta_targ + self.B_rec[:,t+1]*(1-beta_targ)
+
+		self.S_wind_pred[:,t+1] = np.heaviside( self.B_filt_rec[:,t+1] - self.burstThreshold , 1)
+		self.S_wind_targ[:,t+1] = np.heaviside( self.B_filt[:,t+1] - self.burstThreshold , 1)
+
+		self.S_wind_targ_filt[:,t+1] = self.S_wind_targ_filt[:,t]*beta_ro + self.S_wind_targ[:,t+1]*(1-beta_ro)
+		self.S_wind[:,t+1] = np.heaviside( self.S_wind_pred[:,t+1]+ self.S_wind_targ[:,t+1] - 1 , 1  )
+
+
 
 """
-
-
-
-    B(:,t+1) = S_wind_soma(:,t+1).*Sapic(:,t+1) ;
-    B_rec(:,t+1) = S_wind_soma(:,t+1).*SapicRec(:,t+1) ;
-
-    B_filt(:,t+1)  = B_filt(:,t)*beta_targ + B(:,t+1)*(1-beta_targ);
-    B_filt_rec(:,t+1)  = B_filt_rec(:,t)*beta_targ + B_rec(:,t+1)*(1-beta_targ);
-
-    %%
-
-    S_wind_pred(:,t+1) = heaviside( B_filt_rec(:,t+1) - burstThreshold) ;
-    S_wind_targ(:,t+1) = heaviside( B_filt(:,t+1) - burstThreshold) ;%S_wind_apic(:,t+1).*S_wind_soma(:,t+1);%heaviside(S_filtRO(:,t+1)-targThreshold);%.* S_wind_apic(:,t+1);
 
     S_wind_targ_filt(:,t+1) = S_wind_targ_filt(:,t)*betaRO + S_wind_targ(:,t+1)*(1-betaRO);
 
