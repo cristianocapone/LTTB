@@ -89,6 +89,8 @@ class LTTB:
 		self.S_apic_prox = np.zeros((self.N,self.T))
 		self.W = np.zeros((self.N,self.T))
 
+		self.Isoma = np.zeros((self.N,self.T))
+
 		self.S_wind_apic = np.zeros((self.N,self.T))
 		self.S_wind_cont = np.zeros((self.N,self.T))
 		self.S_wind_soma = np.zeros((self.N,self.T))
@@ -130,16 +132,16 @@ class LTTB:
 		# Credo sia dovuto al fatto che J e' una matrice NxN, e moltiplica il vettore N-dimensionale S_filt.
 		# Bisogna quindi inserire il prodotto matriciale?
 
-		self.VapicRec[:,t] = self.VapicRec[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J*self.S_filt[:,t-1] +  self.h + self.href) + self.VresetApic*self.S_apic_prox[:,t-1]
+		self.VapicRec[:,t] = self.VapicRec[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t-1] +  self.h + self.href) + self.VresetApic*self.S_apic_prox[:,t-1]
 
-		self.Vapic[:,t] = self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.jIn*X[:,t-1]*apicalFactor + self.h + self.href) + self.VresetApic*self.Sapic[:,t-1]
+		self.Vapic[:,t] = self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t-1]*self.apicalFactor + self.h + self.href) + self.VresetApic*self.S_apic_dist[:,t-1]
 
-		self.Isoma[:,t] = self.w*self.S_filt[:,t-1] + self.h + self.jInClock*self.xClock[:,t-1] + self.S_wind[:,t-1]*20 - self.b*self.W[:,t-1]
-		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t-1] ) ) * (1-self.Ssoma[:,t-1]) + self.Vreset*self.Ssoma[:,t]/(1 + 2*self.S_wind[:,t-1])
-
-	"""
+		self.Isoma[:,t] = self.w@self.S_filt[:,t-1] + self.h + self.j_in@self.I_clock[:,t-1] + self.S_wind[:,t-1]*20 - self.b*self.W[:,t-1]
+		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t-1] ) ) * (1-self.S_soma[:,t-1]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t-1])
 
 
+
+    """
     %% apical rec comp
 
     VapicRec = VapicRec*(1-dt/tauH)+ dt/tauH*(J*S_filt(:,t)+  h + href  ) + VresetApic*SapicRec(:,t);
@@ -152,6 +154,7 @@ class LTTB:
 
     Isoma = w*S_filt(:,t) + h + jInClock*xClock(:,t) + S_wind(:,t)*20 - b*W(:,t);%15;
     Vsoma = (Vsoma*(1-dt/tauH)+ dt/tauH*( Isoma ) ).*(1-Ssoma(:,t)) + Vreset*Ssoma(:,t)./(1 + 2*S_wind(:,t)) ;%
+
 
     %%
 
