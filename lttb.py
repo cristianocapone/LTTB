@@ -6,15 +6,53 @@
 
 import numpy as np
 from tqdm import trange
+import random
 
 class LTTB:
 	"""
 		This is the base Model ...
 	"""
 
+	def init_clock (self, par):
+		n_steps = self.I
+		T = self.par["T"]
+
+		I_clock = np.zeros((n_steps,T))
+		for t in range(T):
+			k = int(np.floor(t/T*n_steps))
+			I_clock[k,t] = 1;
+			self.I_clock = I_clock
+
+	def init_targ (self, par):
+		T = self.par["T"]
+		dt = self.par["dt"]
+		y_targ = []
+
+		for k in range(self.O):
+			a1 = .5 +1.5*random.uniform(0,1)
+			a2 = .5 +1.5*random.uniform(0,1)
+			a3 = .5 +1.5*random.uniform(0,1)
+			a4 = .5 +1.5*random.uniform(0,1)
+			w1 = 1*2*np.pi
+			w2 = 2 *2*np.pi
+			w3 = 3*2*np.pi
+			w4 = 5*2*np.pi
+			f1 = random.uniform(0,1)*2*np.pi;
+			f2 = random.uniform(0,1)*2*np.pi;
+			f3 = random.uniform(0,1)*2*np.pi;
+			f4 = random.uniform(0,1)*2*np.pi;
+			y_targ.append([a1*np.cos(_*dt*w1+f1) + a2*np.cos(_*dt*w2+f2) + a3*np.cos(_*dt*w3+f3)+ a4*np.cos(_*dt*w4+f4) for _ in range(T)])
+			y_targ[k] = (-min(y_targ[k]) + y_targ[k])/(max(y_targ[k])-min(y_targ[k]))*2-1
+			self.y_targ = np.array(y_targ)
+
 	def __init__ (self, par):
 		# This are the network size N, input I, output O and max temporal span T
 		self.N, self.I, self.O, self.T = par['shape']
+
+		self.ndxE = range(par['Ne'])
+		self.ndxI = range(par['Ne'],par['N'])
+
+		self.h = par['h']
 
 		self.dt = par['dt']
 
@@ -29,11 +67,16 @@ class LTTB:
 
 		# This is the network connectivity matrix
 		self.J = np.random.normal (0., par['sigma_Jrec'], size = (self.N, self.N))
+		self.w = np.random.normal (0., par['sigma_wrec'], size = (self.N, self.N))
+
 		# self.J = np.zeros ((self.N, self.N))
 
 		# This is the network input, teach and output matrices
-		self.J_in = np.random.normal (0., par['sigma_in'], size = (self.N, self.I))
-		self.J_targ = np.random.normal (0., par['sigma_targ'], size = (self.N, self.O))
+		self.j_in = np.random.normal (0., par['sigma_in'], size = (self.N, self.I))
+		self.j_targ = np.random.normal (0., par['sigma_targ'], size = (self.N, self.O))
+		self.j_targ[self.ndxI] = 0
+
+		self.Jdiag = np.diag(-20*np.ones(self.N))
 
 		# This is the hint signal
 		try:
@@ -54,10 +97,10 @@ class LTTB:
 		self.Jreset = np.diag (np.ones (self.N) * self.s_inh)
 
 		# This is the external field
-		h = par['h']
+		#h = par['h']
 
-		assert type (h) in (np.ndarray, float, int)
-		self.h = h if isinstance (h, np.ndarray) else np.ones (self.N) * h
+		#assert type (h) in (np.ndarray, float, int)
+		#self.h = h if isinstance (h, np.ndarray) else np.ones (self.N) * h
 
 		# Membrane potential
 		self.H = np.ones (self.N) * par['Vo']
@@ -75,7 +118,6 @@ class LTTB:
 
 		self.b = 100
 
-		self.t = 0
 
 		self.apicalFactor = 1
 
@@ -83,6 +125,10 @@ class LTTB:
 		self.mi = 4 * self.me
 
 		self.href = -5
+
+	def initialize (self, par):
+
+		self.t = 0
 
 		self.S_soma = np.zeros((self.N,self.T))
 		self.S_apic_dist = np.zeros((self.N,self.T))
@@ -110,9 +156,9 @@ class LTTB:
 
 		self.S_wind_targ_filt = np.zeros((self.N,self.T))
 
-		self.Vapic = np.zeros((self.N,self.T)) + h
-		self.VapicRec = np.zeros((self.N,self.T)) + h
-		self.Vsoma = np.zeros((self.N,self.T)) + h
+		self.Vapic = np.zeros((self.N,self.T)) + self.h
+		self.VapicRec = np.zeros((self.N,self.T)) + self.h
+		self.Vsoma = np.zeros((self.N,self.T)) + self.h
 
 		self.Vreset = -20
 		self.VresetApic = -80*2
@@ -138,96 +184,3 @@ class LTTB:
 
 		self.Isoma[:,t] = self.w@self.S_filt[:,t-1] + self.h + self.j_in@self.I_clock[:,t-1] + self.S_wind[:,t-1]*20 - self.b*self.W[:,t-1]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t-1] ) ) * (1-self.S_soma[:,t-1]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t-1])
-
-
-
-    """
-    %% apical rec comp
-
-    VapicRec = VapicRec*(1-dt/tauH)+ dt/tauH*(J*S_filt(:,t)+  h + href  ) + VresetApic*SapicRec(:,t);
-
-    %% apical cont comp
-
-    Vapic = Vapic*(1-dt/tauH)+ dt/tauH*( jIn*X(:,t)*apicalFactor + h + href  ) + VresetApic*Sapic(:,t);
-
-    %% somatic comp
-
-    Isoma = w*S_filt(:,t) + h + jInClock*xClock(:,t) + S_wind(:,t)*20 - b*W(:,t);%15;
-    Vsoma = (Vsoma*(1-dt/tauH)+ dt/tauH*( Isoma ) ).*(1-Ssoma(:,t)) + Vreset*Ssoma(:,t)./(1 + 2*S_wind(:,t)) ;%
-
-
-    %%
-
-    SapicRec(:,t+1) = heaviside( f(VapicRec) - .5 );
-
-    Sapic(:,t+1) =  heaviside( f(Vapic) - .5 )  ;
-    Sapic_targ(:,t+1) =  Sapic(:,t+1);
-    Ssoma(:,t+1) = heaviside( f(Vsoma) - .5 );
-    Ssoma_targ(:,t+1) =  Ssoma(:,t+1);
-
-    S_filt(:,t+1) = S_filt(:,t)*beta + Ssoma(:,t+1)*(1-beta);
-    S_filtRO(:,t+1) = S_filtRO(:,t)*betaRO + Ssoma(:,t+1)*(1-betaRO);
-
-    S_filt_soma(:,t+1) = S_filt_soma(:,t)*beta_targ + Ssoma(:,t+1)*(1-beta_targ);
-    %   S_filt_apic(:,t+1) = S_filt_apic(:,t)*beta_targ + Sapic(:,t+1)*(1-beta_targ);
-    %   S_filt_apicCont(:,t+1) = S_filt_apicCont(:,t)*beta_targ + Sapic(:,t+1)*(1-beta_targ);
-    W(:,t+1) = W(:,t)*beta_W + Ssoma(:,t+1)*(1-beta_W);
-
-    %   S_wind_apic(:,t+1) = heaviside(S_filt_apic(:,t+1) - apicalThreshold);
-    %   S_wind_apicCont(:,t+1) = heaviside(S_filt_apicCont(:,t+1) - apicalThreshold);
-    S_wind_soma(:,t+1) = heaviside(S_filt_soma(:,t+1) - somaticThreshold);
-
-    B(:,t+1) = S_wind_soma(:,t+1).*Sapic(:,t+1) ;
-    %B(:,t+1) = Sapic(:,t+1) ;
-
-    B_rec(:,t+1) = S_wind_soma(:,t+1).*SapicRec(:,t+1) ;
-
-    B_filt(:,t+1)  = B_filt(:,t)*beta_targ + B(:,t+1)*(1-beta_targ);
-    B_filt_rec(:,t+1)  = B_filt_rec(:,t)*beta_targ + B_rec(:,t+1)*(1-beta_targ);
-
-    %%
-
-    S_wind_pred(:,t+1) = heaviside( B_filt_rec(:,t+1) - burstThreshold) ;
-    S_wind_targ(:,t+1) = heaviside( B_filt(:,t+1) - burstThreshold) ;%S_wind_apic(:,t+1).*S_wind_soma(:,t+1);%heaviside(S_filtRO(:,t+1)-targThreshold);%.* S_wind_apic(:,t+1);
-
-    S_wind_targ_filt(:,t+1) = S_wind_targ_filt(:,t)*betaRO + S_wind_targ(:,t+1)*(1-betaRO);
-
-    %S_wind(:,t+1) = S_wind_targ(:,t+1);
-    S_wind(:,t+1) = min( S_wind_pred(:,t+1)+S_wind_targ(:,t+1) ,1);
-
-    V(:,t) = Vsoma;
-    Vap(:,t) = Vapic;
-
-
-	"""
-
-	"""
-    def _sigm (self, x, dv = None):
-        if dv is None:
-            dv = self.dv
-
-        # If dv is too small, no need for elaborate computation, just return
-        # the theta function
-        if dv < 1 / 30:
-            return x > 0
-
-        # Here we apply numerically stable version of signoid activation
-        # based on the sign of the potential
-        y = x / dv
-
-        out = np.zeros (x.shape)
-        mask = x > 0
-        out [mask] = 1. / (1. + np.exp (-y [mask]))
-        out [~mask] = np.exp (y [~mask]) / (1. + np.exp (y [~mask]))
-
-        return out
-
-    def step (self ):
-        itau_m = self.itau_m
-        itau_s = self.itau_s
-
-        self.S_hat [:] = self.S_hat [:] * itau_s + self.S [:] * (1. - itau_s)
-        self.H [:] = self.H [:] * itau_m + (1. - itau_m) * (self.J @ self.S_hat [:]  + self.h) + self.Jreset @ self.S [:]
-
-        self.S [:] = self._sigm (self.H [:], dv = self.dv) - 0.5 > 0.
-		"""
