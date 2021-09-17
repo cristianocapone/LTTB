@@ -61,6 +61,7 @@ class LTTB:
 		self.tau_ro = par['tau_ro']
 		self.tau_star = par['tau_star']
 		self.tau_W = par['tau_W']
+		self.n_contexts = par['n_contexts']
 
 		self.itau_m = np.exp (-self.dt / par['tau_m'])
 		self.itau_s = np.exp (-self.dt / par['tau_s'])
@@ -130,8 +131,8 @@ class LTTB:
 
 		self.href = -5
 
-		self.j_cont =  self.par['sigma_context']*np.random.normal (0., 1., size = (self.N, 2))
-		self.cont = np.array([0,0])
+		self.j_cont =  self.par['sigma_context']*np.random.normal (0., 1., size = (self.N, self.n_contexts))
+		self.cont = np.zeros((self.n_contexts))
 
 	def initialize (self, par):
 
