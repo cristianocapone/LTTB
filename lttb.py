@@ -195,8 +195,8 @@ class LTTB:
 		beta_targ = np.exp(-self.dt/self.tau_star)
 		beta = np.exp(-self.dt/self.tau_s)
 
-		self.VapicRec[:,t] = self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] +  self.h + self.href) + self.VresetApic*self.S_apic_prox[:,t]
-		self.Vapic[:,t] = self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.j_cont@self.cont + self.h + self.href) + self.VresetApic*self.S_apic_dist[:,t]
+		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] +  self.h + self.href) )* (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
+		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.j_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
 
 		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.S_wind[:,t]*20 - self.b*self.W[:,t]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
