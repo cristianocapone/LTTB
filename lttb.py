@@ -130,6 +130,13 @@ class LTTB:
 		self.mi = 4 * self.me
 
 		self.href = -5
+		
+		self.Vreset = -20
+		self.VresetApic = -80*2
+		self.apicalThreshold = .05/4/4
+		self.somaticThreshold = .05/2
+		self.burstThreshold = .05/4
+		self.targThreshold = .08
 
 		self.j_cont =  self.par['sigma_context']*np.random.normal (0., 1., size = (self.N, self.n_contexts))
 		self.cont = np.zeros((self.n_contexts))
@@ -174,13 +181,6 @@ class LTTB:
 		self.Vapic = np.zeros((self.N,self.T)) + self.h
 		self.VapicRec = np.zeros((self.N,self.T)) + self.h
 		self.Vsoma = np.zeros((self.N,self.T)) + self.h
-
-		self.Vreset = -20
-		self.VresetApic = -80*2
-		self.apicalThreshold = .05/4/4
-		self.somaticThreshold = .05/2
-		self.burstThreshold = .05/4
-		self.targThreshold = .08
 
 
 
