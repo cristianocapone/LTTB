@@ -210,7 +210,7 @@ class LTTB:
 		self.S_filt[:,t+1] = self.S_filt[:,t]*beta + self.S_soma[:,t+1]*(1-beta)
 		self.S_filtRO[:,t+1] = self.S_filtRO[:,t]*beta_ro + self.S_soma[:,t+1]*(1-beta_ro)
 		self.S_filt_soma[:,t+1] = self.S_filt_soma[:,t]*beta_targ + self.S_soma[:,t+1]*(1-beta_targ)
-		self.W[:,t+1] = self.W[:,t+1]*beta_W + self.S_soma[:,t+1]*(1-beta_W);
+		self.W[:,t+1] = self.W[:,t]*beta_W + self.S_soma[:,t+1]*(1-beta_W)
 
 		self.S_wind_soma[:,t+1] = np.heaviside(self.S_filt_soma[:,t+1] - self.somaticThreshold, 0)
 
