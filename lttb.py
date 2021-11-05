@@ -130,7 +130,7 @@ class LTTB:
 		self.mi = 4 * self.me
 
 		self.href = -5
-		
+
 		self.Vreset = -20
 		self.VresetApic = -80*2
 		self.apicalThreshold = .05/4/4
@@ -148,7 +148,7 @@ class LTTB:
 		self.S_soma = np.zeros((self.N,self.T))
 		self.S_apic_dist = np.zeros((self.N,self.T))
 		self.S_apic_prox = np.zeros((self.N,self.T))
-		self.W = np.zeros((self.N,self.T))
+		self.W = np.zeros((self.N,self.T))+.05
 
 		self.Isoma = np.zeros((self.N,self.T))
 
@@ -173,9 +173,6 @@ class LTTB:
 		self.S_filtRO = np.zeros((self.N,self.T))
 
 		self.S_wind_pred = np.zeros((self.N,self.T))
-
-
-
 		self.S_wind_targ_filt = np.zeros((self.N,self.T))
 
 		self.Vapic = np.zeros((self.N,self.T)) + self.h
@@ -198,6 +195,49 @@ class LTTB:
 		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] +  self.h + self.href) )* (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
 		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.j_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
 
+		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.S_wind[:,t]*20 - self.b*self.W[:,t]
+		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
+
+		self.S_apic_prox[:,t+1] = np.heaviside( self.VapicRec[:,t], 0 )
+		self.S_apic_dist[:,t+1] = np.heaviside( self.Vapic[:,t], 0 )
+		#self.Sapic_targ[:,t+1]  =  self.S_apic[:,t+1]
+
+		self.S_soma[:,t+1]= np.heaviside( self.Vsoma[:,t], 0 )
+		#Ssoma_targ(:,t+1) =  Ssoma(:,t+1)
+		self.S_filt[:,t+1] = self.S_filt[:,t]*beta + self.S_soma[:,t+1]*(1-beta)
+		self.S_filtRO[:,t+1] = self.S_filtRO[:,t]*beta_ro + self.S_soma[:,t+1]*(1-beta_ro)
+		self.S_filt_soma[:,t+1] = self.S_filt_soma[:,t]*beta_targ + self.S_soma[:,t+1]*(1-beta_targ)
+		self.W[:,t+1] = self.W[:,t]*beta_W + self.S_soma[:,t+1]*(1-beta_W)
+
+		self.S_wind_soma[:,t+1] = np.heaviside(self.S_filt_soma[:,t+1] - self.somaticThreshold, 0)
+
+		self.B[:,t+1]  = self.S_wind_soma[:,t+1]*self.S_apic_dist[:,t+1]
+		self.B_rec[:,t+1]  = self.S_wind_soma[:,t+1]*self.S_apic_prox[:,t+1]
+
+		self.B_filt[:,t+1]   = self.B_filt[:,t]*beta_targ + self.B[:,t+1]*(1-beta_targ)
+		self.B_filt_rec[:,t+1]   = self.B_filt_rec[:,t]*beta_targ + self.B_rec[:,t+1]*(1-beta_targ)
+
+		self.S_wind_pred[:,t+1] = np.heaviside( self.B_filt_rec[:,t+1] - self.burstThreshold , 1)
+		self.S_wind_targ[:,t+1] = np.heaviside( self.B_filt[:,t+1] - self.burstThreshold , 1)
+
+		self.S_wind_targ_filt[:,t+1] = self.S_wind_targ_filt[:,t]*beta_ro + self.S_wind_targ[:,t+1]*(1-beta_ro)
+		self.S_wind[:,t+1] = np.heaviside( self.S_wind_pred[:,t+1]+ self.S_wind_targ[:,t+1] - 1 , 1  )
+
+	def step_mult_cont (self,apicalFactor):
+		self.t += 1
+		t = self.t
+
+		itau_m = self.itau_m
+		itau_s = self.itau_s
+		beta_ro = np.exp(-self.dt/self.tau_ro)
+		beta_W = np.exp(-self.dt/self.tau_W)
+		beta_targ = np.exp(-self.dt/self.tau_star)
+		beta = np.exp(-self.dt/self.tau_s)
+
+		#
+		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] +  self.h + self.href) ) * (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
+
+		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.j_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
 		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.S_wind[:,t]*20 - self.b*self.W[:,t]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
 
