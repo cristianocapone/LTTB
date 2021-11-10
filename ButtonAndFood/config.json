@@ -1,0 +1,51 @@
+{
+    "BUTTON_FOOD" :
+    {
+        "N" : 300, 
+        "T" : 80,
+        "I" : 80,
+        "O" : 2,
+        "H" : 2,
+        "dt" : 0.001,
+        "dx" : 0.1,
+        "offT" : 5,
+        "alpha" : 0.01,
+        "alpha_rout" : 0.01,
+
+        "sigma_Jrec" : 0.07071067811865475,
+	    "sigma_input" : 5,
+        "sigma_teach" : 3,
+        "sigma_hint" : 5,
+        
+        "tau_m" : 0.006, 
+        "tau_s" : 0.002, 
+        "tau_ro" : 0.010,
+        "tau_star" : 0.005,
+	    
+        "dv" : 0.01, 
+        "Vo" : -4,
+        "h" : -4,
+        "s_inh" : 20,
+        "shape" : [300, 80, 2, 80],
+        "hint_shape" : 2,
+
+        "rt" : 0.7,
+        "rb" : -0.2,
+        
+        "hint" : "True",
+        "clump" : "True",
+        "feedback" : "diagonal",
+        "validate" : "False",
+        "verbose" : "True",
+
+        "rep" : 10,
+        "scan" : 10,
+        "epochs" : 250,
+
+        "trainset" : [50, 70, 90, 110, 130],
+        "validset" : [90],
+        "testset"  : [30, 150, 120],
+
+        "savepath" : "data/"
+    }
+}
