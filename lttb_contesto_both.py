@@ -138,7 +138,9 @@ class LTTB:
 		self.burstThreshold = .05/4
 		self.targThreshold = .08
 
-		self.j_cont =  np.random.normal (0., 1., size = (self.N, self.n_contexts))
+		self.j_basal_cont =  np.random.normal (0., 1., size = (self.N, self.n_contexts))
+		self.j_apical_cont =  np.random.normal (0., 1., size = (self.N, self.n_contexts))
+		
 		self.cont = np.zeros((self.n_contexts))
 
 	def initialize (self, par):
@@ -195,10 +197,10 @@ class LTTB:
 		beta_targ = np.exp(-self.dt/self.tau_star)
 		beta = np.exp(-self.dt/self.tau_s)
 
-		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] +  self.h + self.href) )* (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
-		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.par['sigma_context']*self.j_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
+		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] + self.h + self.href) )* (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
+		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.par['sigma_apical_context']*self.j_apical_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
 
-		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.S_wind[:,t]*20 - self.b*self.W[:,t]
+		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.par['sigma_basal_context']*self.j_basal_cont@self.cont + self.S_wind[:,t]*20 - self.b*self.W[:,t]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
 
 		self.S_apic_prox[:,t+1] = np.heaviside( self.VapicRec[:,t], 0 )
