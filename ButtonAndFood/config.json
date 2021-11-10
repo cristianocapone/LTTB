@@ -42,7 +42,7 @@
         "scan" : 10,
         "epochs" : 250,
 
-        "trainset" : [50, 70, 90, 110, 130],
+        "trainset" : [30],
         "validset" : [90],
         "testset"  : [30, 150, 120],
 
