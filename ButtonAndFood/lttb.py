@@ -138,8 +138,8 @@ class LTTB:
 		self.burstThreshold = .05/4
 		self.targThreshold = .08
 
-		self.j_cont =  self.par['sigma_context']*np.random.normal (0., 1., size = (self.N, self.n_contexts))
-		self.cont = np.zeros((self.n_contexts))
+		self.j_cont =  self.par['sigma_context']*np.random.normal (0., 1., size = (self.N, 2))
+		self.cont = np.zeros((2))
 
 	def initialize (self, par):
 
@@ -178,6 +178,8 @@ class LTTB:
 		self.Vapic = np.zeros((self.N,self.T)) + self.h
 		self.VapicRec = np.zeros((self.N,self.T)) + self.h
 		self.Vsoma = np.zeros((self.N,self.T)) + self.h
+		self.I_clock = np.zeros((self.I,self.T))
+        
 
 
 
