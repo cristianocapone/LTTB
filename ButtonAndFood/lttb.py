@@ -121,7 +121,7 @@ class LTTB:
 		# Here we save the params dictionary
 		self.par = par
 
-		self.b = 100
+		self.b = 0
 
 
 		self.apicalFactor = 1
@@ -148,7 +148,7 @@ class LTTB:
 		self.S_soma = np.zeros((self.N,self.T))
 		self.S_apic_dist = np.zeros((self.N,self.T))
 		self.S_apic_prox = np.zeros((self.N,self.T))
-		self.W = np.zeros((self.N,self.T))+.05
+		self.W = np.zeros((self.N,self.T))
 
 		self.Isoma = np.zeros((self.N,self.T))
 

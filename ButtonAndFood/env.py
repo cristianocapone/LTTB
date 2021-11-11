@@ -274,7 +274,7 @@ class Unlock:
 
         self.t = 0 
 
-    def build_expert (self, targ, init, btn, steps = (80, 80), T = (100, 100), offT = (0, 0), vtarg = None):
+    def build_expert (self, targ, init, btn, steps = (200, 200), T = (300, 300), offT = (0, 0), vtarg = None):
         assert np.sum (T) >= (np.sum (steps) + np.sum (offT)) 
         vtarg = np.array (vtarg) * self.dx / self.dt if vtarg else np.zeros (2) 
         vbtn = np.zeros (2) 
