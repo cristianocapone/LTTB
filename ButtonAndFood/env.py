@@ -22,7 +22,7 @@ class Unlock:
         Possible action is the agent move in the next time step.
     '''
     def __init__(self, init = None, targ = None, vtarg = None, btn = None, unit = (1., 1.),
-                 max_T = 500, extent = ((-1, -1), (1, 1)), res = 25, render = False, rs = (0.05, 0.03), N = 100):
+                 max_T = 1500, extent = ((-1, -1), (1, 1)), res = 25, render = False, rs = (0.1, 0.03), N = 100):
         # Here we collect environment duration and span
         self.max_T = max_T 
         self.extent = np.array (extent) 
