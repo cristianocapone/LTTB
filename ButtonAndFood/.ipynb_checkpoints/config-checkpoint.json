@@ -1,8 +1,8 @@
 {
     "BUTTON_FOOD" :
     {
-        "N" : 300,
-        "T" : 120,
+        "N" : 300, 
+        "T" : 80,
         "I" : 80,
         "O" : 2,
         "H" : 2,
@@ -16,22 +16,22 @@
 	    "sigma_input" : 5,
         "sigma_teach" : 3,
         "sigma_hint" : 5,
-
-        "tau_m" : 0.006,
-        "tau_s" : 0.002,
+        
+        "tau_m" : 0.006, 
+        "tau_s" : 0.002, 
         "tau_ro" : 0.010,
         "tau_star" : 0.005,
-
-        "dv" : 0.01,
+	    
+        "dv" : 0.01, 
         "Vo" : -4,
         "h" : -4,
         "s_inh" : 20,
-        "shape" : [300, 80, 2, 120],
+        "shape" : [300, 80, 2, 80],
         "hint_shape" : 2,
 
         "rt" : 0.7,
         "rb" : -0.2,
-
+        
         "hint" : "True",
         "clump" : "True",
         "feedback" : "diagonal",
