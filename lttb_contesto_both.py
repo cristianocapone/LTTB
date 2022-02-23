@@ -46,8 +46,14 @@ class LTTB:
 			self.y_targ = np.array(y_targ)
 
 	def __init__ (self, par):
+		self.N = par['N']
+		self.I = par['I']
+		self.O = par['O']
+		self.T = par['T']
+		self.shape = (self.N,self.I,self.O,self.T)
+		
 		# This are the network size N, input I, output O and max temporal span T
-		self.N, self.I, self.O, self.T = par['shape']
+		#self.N, self.I, self.O, self.T = par['shape']
 
 		self.ndxE = range(par['Ne'])
 		self.ndxI = range(par['Ne'],par['N'])
@@ -67,8 +73,6 @@ class LTTB:
 		self.itau_s = np.exp (-self.dt / par['tau_s'])
 		self.itau_ro = np.exp (-self.dt / par['tau_ro'])
 		self.itau_star = np.exp (-self.dt / par['tau_star'])
-
-		self.dv = par['dv']
 
 		# This is the network connectivity matrix
 		self.J = np.random.normal (0., par['sigma_Jrec'], size = (self.N, self.N))
@@ -143,6 +147,9 @@ class LTTB:
 		
 		self.cont = np.zeros((self.n_contexts))
         
+		self.sigma_apical_cont = par['sigma_apical_cont']
+		self.sigma_basal_cont = par['sigma_basal_cont']
+        
 		self.Bias = np.zeros((self.O))
 
 	def initialize (self, par):
@@ -200,9 +207,9 @@ class LTTB:
 		beta = np.exp(-self.dt/self.tau_s)
 
 		self.VapicRec[:,t] = (self.VapicRec[:,t]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.J@self.S_filt[:,t] + self.h + self.href) )* (1-self.S_apic_prox[:,t]) + self.VresetApic*self.S_apic_prox[:,t]
-		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.par['sigma_apical_context']*self.j_apical_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
+		self.Vapic[:,t] = (self.Vapic[:,t-1]*(1-self.dt/self.tau_m) + self.dt/self.tau_m*(self.j_targ@self.y_targ[:,t]*apicalFactor + self.sigma_apical_cont*self.j_apical_cont@self.cont + self.h + self.href) ) * (1-self.S_apic_dist[:,t]) + self.VresetApic*self.S_apic_dist[:,t]
 
-		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.par['sigma_basal_context']*self.j_basal_cont@self.cont + self.S_wind[:,t]*20 - self.b*self.W[:,t]
+		self.Isoma[:,t] = self.w@self.S_filt[:,t] + self.h + self.j_in@self.I_clock[:,t] + self.sigma_basal_cont*self.j_basal_cont@self.cont + self.S_wind[:,t]*20 - self.b*self.W[:,t]
 		self.Vsoma[:,t] = (self.Vsoma[:,t-1]*(1-self.dt/self.tau_m)+ self.dt/self.tau_m*( self.Isoma[:,t] ) ) * (1-self.S_soma[:,t]) + self.Vreset*self.S_soma[:,t]/(1 + 2*self.S_wind[:,t])
 
 		self.S_apic_prox[:,t+1] = np.heaviside( self.VapicRec[:,t], 0 )
