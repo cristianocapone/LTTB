@@ -1,7 +1,0 @@
-data
-figures
-fig*.*
-*.npy
-*.json
-*.zip
-release/*
